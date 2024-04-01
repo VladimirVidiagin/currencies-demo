@@ -1,0 +1,13 @@
+@import "../src/App/globalStyles";
+
+// shared
+@import "../src/shared/Subheader/subheader",
+  "../src/shared/InputDateField/inputDateField",
+  "../src/shared/CheckboxField/checkboxField", "../src/shared/Button/button";
+
+// widgets
+@import "../src/widgets/CurrenciesForm/currenciesForm",
+  "../src/widgets/CurrenciesChart/currenciesChart";
+
+// pages
+@import "../src/pages/CurrencyPage/currenciesPage";

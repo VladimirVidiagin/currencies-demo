@@ -1,0 +1,16 @@
+.currencies-form {
+  width: 35%;
+  padding: 30px 0;
+
+  &__fields-block {
+    display: grid;
+    grid-template-rows: 25px 1fr;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    background-color: rgb(230, 230, 230);
+    align-items: center;
+  }
+}

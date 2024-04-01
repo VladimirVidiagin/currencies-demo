@@ -1,0 +1,8 @@
+.checkbox-field {
+  & > *:not(:last-child) {
+    margin-right: 5px;
+  }
+  &__input-label {
+    color: rgba(53, 61, 75, 1);
+  }
+}

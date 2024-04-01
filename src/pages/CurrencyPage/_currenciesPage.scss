@@ -1,0 +1,10 @@
+.currencies-page {
+  &__body {
+    display: flex;
+    flex-direction: row;
+    padding: 30px;
+    & > *:not(:last-child) {
+      margin-right: 20px;
+    }
+  }
+}
