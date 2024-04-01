@@ -1,0 +1,10 @@
+{
+  "files": {
+    "main.js": "/currencies-demo/static/js/main.8458ae99.js",
+    "index.html": "/currencies-demo/index.html",
+    "main.8458ae99.js.map": "/currencies-demo/static/js/main.8458ae99.js.map"
+  },
+  "entrypoints": [
+    "static/js/main.8458ae99.js"
+  ]
+}
