@@ -6,9 +6,14 @@ import { InputDateField } from "../../shared/InputDateField/InputDateField";
 import { CurreniesActionTypes } from "../../app/types/currencies";
 import Message from "../../shared/Message/Message";
 import Button from "../../shared/Button/Button";
+import { useTypedSelector } from "../../app/hooks/useTypedSelector";
 
 export const CurrenciesForm: React.FC = () => {
   const dispatch = useDispatch();
+
+  const { cachedCurrenciesData } = useTypedSelector(
+    (state) => state.currencies
+  );
 
   interface FormValues {
     eur: boolean;
@@ -29,52 +34,87 @@ export const CurrenciesForm: React.FC = () => {
   const allCurrenciesUnchecked =
     !formValues.eur && !formValues.usd && !formValues.cny;
 
+  const cachedDates = cachedCurrenciesData.map((day) => day.date);
+
   const [requestCount, setRequestCount] = useState(0);
-  const getDatesInRange = (startDate: string, endDate: string): string[] => {
-    const dates = [];
+
+  const getDatesInRange = (
+    startDate: string,
+    endDate: string,
+    dispatch: Function
+  ): string[] => {
+    const datesForRequest = [];
+    const selectedDates = [];
+
     let currentDate = new Date(startDate);
 
-    if (!endDate) {
-      return [currentDate.toISOString().slice(0, 10)];
-    }
+    const formatDate = (date: Date): string => date.toISOString().slice(0, 10);
 
-    while (currentDate <= new Date(endDate)) {
-      dates.push(currentDate.toISOString().slice(0, 10));
-      currentDate.setDate(currentDate.getDate() + 1);
-    }
+    const hasBothDates = startDate !== "" && endDate !== "";
 
-    return dates;
+    const hasOnlyNewStartDate =
+      endDate === "" &&
+      !cachedDates.includes(currentDate.toISOString().slice(0, 10));
+
+    const hasOnlyCashedStartDate =
+      endDate === "" &&
+      cachedDates.includes(currentDate.toISOString().slice(0, 10));
+
+    switch (true) {
+      case hasBothDates:
+        while (currentDate <= new Date(endDate)) {
+          if (!cachedDates.includes(currentDate.toISOString().slice(0, 10))) {
+            datesForRequest.push(formatDate(currentDate));
+          }
+          selectedDates.push(formatDate(currentDate));
+          currentDate.setDate(currentDate.getDate() + 1);
+        }
+        dispatch({
+          type: "UPDATE_DATE_SELECTION",
+          payload: selectedDates,
+        });
+        return datesForRequest;
+
+      case hasOnlyNewStartDate:
+        dispatch({
+          type: "UPDATE_DATE_SELECTION",
+          payload: [currentDate.toISOString().slice(0, 10)],
+        });
+        return [currentDate.toISOString().slice(0, 10)];
+
+      case hasOnlyCashedStartDate:
+        dispatch({
+          type: "UPDATE_DATE_SELECTION",
+          payload: [currentDate.toISOString().slice(0, 10)],
+        });
+    }
+    return [];
   };
 
   useEffect(() => {
     const fetchData = async () => {
-      dispatch({ type: CurreniesActionTypes.RESET_CURRENCIES });
       if (formValues.dateFrom) {
-        const dates = getDatesInRange(formValues.dateFrom, formValues.dateTo);
-        const selectedCurrencies = Object.keys(formValues).filter(
-          (key) =>
-            formValues[key as keyof FormValues] &&
-            key !== "dateFrom" &&
-            key !== "dateTo"
+        const newSelectedDates = getDatesInRange(
+          formValues.dateFrom,
+          formValues.dateTo,
+          dispatch
         );
-        for (const date of dates) {
+        for (const date of newSelectedDates) {
           try {
             setRequestCount((prevCount) => prevCount + 1);
             const response = await axios.get(
               `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@${date}/v1/currencies/rub.json`
             );
-
-            selectedCurrencies.map((currency: string) => {
-              return dispatch({
-                type: CurreniesActionTypes.FETCH_CURRENCY,
-                payload: {
-                  type: currency,
-                  dateWithCost: {
-                    date: response.data.date,
-                    cost: 1 / response.data.rub[currency],
-                  },
+            dispatch({
+              type: CurreniesActionTypes.FETCH_CURRENCY,
+              payload: {
+                dateWithCosts: {
+                  date: response.data.date,
+                  eur: 1 / response.data.rub.eur,
+                  usd: 1 / response.data.rub.usd,
+                  cny: 1 / response.data.rub.cny,
                 },
-              });
+              },
             });
           } catch (error) {
             console.error("Error fetching data:", error);
@@ -88,6 +128,7 @@ export const CurrenciesForm: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;
+
     if (type === "checkbox") {
       setFormValues((prevFormValues) => ({
         ...prevFormValues,
@@ -95,6 +136,11 @@ export const CurrenciesForm: React.FC = () => {
         dateFrom: allCurrenciesUnchecked ? "" : prevFormValues.dateFrom,
         dateTo: allCurrenciesUnchecked ? "" : prevFormValues.dateTo,
       }));
+
+      dispatch({
+        type: "UPDATE_CURRENCY_SELECTION",
+        payload: { name, selected: checked },
+      });
     } else {
       setFormValues((prevFormValues) => ({
         ...prevFormValues,
@@ -104,8 +150,6 @@ export const CurrenciesForm: React.FC = () => {
   };
 
   const today = new Date().toISOString().split("T")[0];
-  const areCheckboxesSelected =
-    formValues.eur || formValues.usd || formValues.cny;
 
   const getThirtyDaysAgoDate = (): string => {
     const today = new Date();
@@ -121,6 +165,10 @@ export const CurrenciesForm: React.FC = () => {
       dateFrom: "",
       dateTo: "",
     }));
+    dispatch({
+      type: "UPDATE_DATE_SELECTION",
+      payload: [],
+    });
   };
 
   return (
@@ -149,7 +197,6 @@ export const CurrenciesForm: React.FC = () => {
           label="Дата с"
           value={formValues.dateFrom}
           onChange={handleChange}
-          disabled={!areCheckboxesSelected}
           minDate={getThirtyDaysAgoDate()}
           maxDate={formValues.dateTo || today}
         />
@@ -158,7 +205,7 @@ export const CurrenciesForm: React.FC = () => {
           label="Дата по"
           value={formValues.dateTo}
           onChange={handleChange}
-          disabled={!areCheckboxesSelected || !formValues.dateFrom}
+          disabled={!formValues.dateFrom}
           minDate={formValues.dateFrom}
           maxDate={today}
         />

@@ -9,32 +9,59 @@ export interface CurrencyDateWithCost {
   cost: string;
 }
 
+interface SelectedCurrency {
+  name: CurrencyTypes.eur | CurrencyTypes.usd | CurrencyTypes.cny;
+  selected: boolean;
+}
+
 export interface Currency {
   type: CurrencyTypes.eur | CurrencyTypes.usd | CurrencyTypes.cny;
   trackedDays: CurrencyDateWithCost[];
 }
 export interface CurrenciesState {
-  currencies: Currency[];
+  cachedCurrenciesData: any[];
+  selectedDates: string[];
+  selectedCurrencies: SelectedCurrency[];
 }
 
 export enum CurreniesActionTypes {
   RESET_CURRENCIES = "RESET_CURRENCIES",
   FETCH_CURRENCY = "FETCH_CURRENCY",
+  UPDATE_CURRENCY_SELECTION = "UPDATE_CURRENCY_SELECTION",
+  UPDATE_DATE_SELECTION = "UPDATE_DATE_SELECTION",
 }
 
 interface ResetCurrenciesAction {
   type: CurreniesActionTypes.RESET_CURRENCIES;
 }
 
-interface FetchCurrencySuccessAction {
+interface FetchCurrenciesAction {
   type: CurreniesActionTypes.FETCH_CURRENCY;
   payload: {
-    type: CurrencyTypes.eur | CurrencyTypes.usd | CurrencyTypes.cny;
-    dateWithCost: {
+    dateWithCosts: {
       date: string;
-      cost: string;
+      eur: string;
+      usd: string;
+      cny: string;
     };
   };
 }
 
-export type CurrencyAction = ResetCurrenciesAction | FetchCurrencySuccessAction;
+interface UpdateCurrencySelectionAction {
+  type: CurreniesActionTypes.UPDATE_CURRENCY_SELECTION;
+  payload: {
+    name: CurrencyTypes.eur | CurrencyTypes.usd | CurrencyTypes.cny;
+    selected: boolean;
+  };
+}
+
+interface UpdateDateSelectionAction {
+  type: CurreniesActionTypes.UPDATE_DATE_SELECTION;
+  payload: string[];
+}
+
+export type CurrencyAction =
+  | ResetCurrenciesAction
+  | FetchCurrenciesAction
+  | UpdateCurrencySelectionAction
+  | UpdateDateSelectionAction;

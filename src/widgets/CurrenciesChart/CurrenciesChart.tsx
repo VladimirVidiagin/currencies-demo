@@ -22,7 +22,8 @@ ChartJS.register(
 );
 
 export const CurrenciesChart: React.FC = () => {
-  const { currencies } = useTypedSelector((state) => state.currencies);
+  const { selectedDates, selectedCurrencies, cachedCurrenciesData } =
+    useTypedSelector((state) => state.currencies);
 
   function getColor(
     currencyType: CurrencyTypes.eur | CurrencyTypes.usd | CurrencyTypes.cny
@@ -39,13 +40,15 @@ export const CurrenciesChart: React.FC = () => {
     }
   }
 
-  const datasets = currencies.map((currency) => {
+  const datasets = selectedCurrencies.map((currency) => {
     return {
-      label: currency.type.toLocaleUpperCase(),
-      data: currency.trackedDays?.map((day) => day.cost),
-      backgroundColor: getColor(currency.type),
-      borderColor: getColor(currency.type),
-      pointBorderColor: getColor(currency.type),
+      label: currency?.name.toLocaleUpperCase(),
+      data: currency.selected
+        ? cachedCurrenciesData?.map((day) => day[currency.name])
+        : [],
+      backgroundColor: getColor(currency.name),
+      borderColor: getColor(currency.name),
+      pointBorderColor: getColor(currency.name),
       tension: 0.4,
     };
   });
@@ -62,9 +65,7 @@ export const CurrenciesChart: React.FC = () => {
     return `${formattedDay}.${formattedMonth}.${year}`;
   }
 
-  const labels = currencies
-    ?.find((currency) => currency.trackedDays.length > 0)
-    ?.trackedDays?.map((day) => formatDate(day.date));
+  const labels = selectedDates?.map((day) => formatDate(day));
 
   const data = {
     labels,
